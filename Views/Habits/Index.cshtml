@@ -1,0 +1,68 @@
+﻿@model IEnumerable<HabitTracker.Models.Habit>
+
+@{
+    ViewData["Title"] = "Moje Nawyki";
+}
+
+<div class="container mt-4" style="max-width: 1100px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="font-weight-bold text-dark mb-1"> Lista nawyków</h2>
+            <p class="text-muted small mb-0">Zarządzaj swoimi celami i aktualnymi rutynami.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-sm btn-primary font-weight-bold px-3 py-2" style="border-radius: 6px; background-color: #007bff; border-color: #007bff;">
+            + Nowy nawyk
+        </a>
+    </div>
+
+    <div class="card border bg-white" style="border-radius: 8px; border-color: #e5e7eb !important;">
+        <div class="table-responsive">
+            <table class="table mb-0" style="background-color: #ffffff;">
+                <thead class="bg-transparent" style="border-bottom: 2px solid #e5e7eb;">
+                    <tr>
+                        <th class="text-secondary small font-weight-bold text-uppercase border-0 p-3 pl-4">Nazwa</th>
+                        <th class="text-secondary small font-weight-bold text-uppercase border-0 p-3">Częstotliwość</th>
+                        <th class="text-secondary small font-weight-bold text-uppercase border-0 p-3">Cel</th>
+                        <th class="text-secondary small font-weight-bold text-uppercase border-0 p-3">Kategoria</th>
+                        <th class="text-secondary small font-weight-bold text-uppercase border-0 p-3 text-right pr-4">Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-muted small">
+                                Brak zdefiniowanych nawyków.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr class="align-middle" style="border-bottom: 1px solid #e5e7eb;">
+                                <td class="p-3 pl-4 border-0">
+                                    <span class="font-weight-bold text-dark">@item.Name</span>
+                                    @if (!item.IsActive)
+                                    {
+                                        <span class="badge badge-light border text-muted ml-2 px-2" style="font-size: 0.7rem; border-radius: 4px;">Nieaktywny</span>
+                                    }
+                                </td>
+                                <td class="p-3 text-secondary border-0 small">@item.Frequency</td>
+                                <td class="p-3 text-secondary border-0 small">@item.Target</td>
+                                <td class="p-3 border-0 small text-dark">
+                                    <span class="font-weight-bold">📁 @(item.Category?.Name ?? "Brak")</span>
+                                </td>
+                                <td class="p-3 border-0 text-right pr-4 small">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="text-primary font-weight-bold text-decoration-none mr-2">Edytuj</a>
+                                    <span class="text-muted">|</span>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="text-danger font-weight-bold text-decoration-none ml-2">Usuń</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

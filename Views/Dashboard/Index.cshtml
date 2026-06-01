@@ -1,0 +1,123 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    var userHabits = ViewBag.UserHabits as List<HabitTracker.Models.Habit> ?? new List<HabitTracker.Models.Habit>();
+    var recentActivities = ViewBag.RecentActivities as List<HabitTracker.Models.HabitLog> ?? new List<HabitTracker.Models.HabitLog>();
+    var categoriesStats = ViewBag.HabitsByCategory as List<HabitTracker.Controllers.CategoryStatsViewModel> ?? new List<HabitTracker.Controllers.CategoryStatsViewModel>();
+}
+
+<div class="container mt-4" style="max-width: 1100px;">
+    <div class="mb-4">
+        <h2 class="font-weight-bold text-dark mb-1">Cześć! </h2>
+        <p class="text-muted small">Oto podsumowanie Twoich dzisiejszych postępów i nawyków.</p>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100 border bg-white" style="border-radius: 8px; border-color: #e5e7eb !important;">
+                <div class="card-body p-4">
+                    <span class="text-muted small font-weight-bold text-uppercase tracking-wider">Aktywne Nawyki</span>
+                    <h3 class="display-4 font-weight-bold text-dark mt-2 mb-0">@ViewBag.ActiveHabitsCount</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100 border bg-white" style="border-radius: 8px; border-color: #e5e7eb !important;">
+                <div class="card-body p-4">
+                    <span class="text-muted small font-weight-bold text-uppercase tracking-wider">Łącznie Ukończeń</span>
+                    <h3 class="display-4 font-weight-bold text-success mt-2 mb-0">@ViewBag.TotalCompletions</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7 mb-4">
+            <div class="card border bg-white h-100" style="border-radius: 8px; border-color: #e5e7eb !important;">
+                <div class="card-header bg-transparent border-bottom p-3" style="border-color: #e5e7eb !important;">
+                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 1.1rem;">✅ Dzisiejsze zadania</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (!userHabits.Any())
+                    {
+                        <div class="p-4 text-center text-muted small">
+                            Nie masz obecnie żadnych aktywnych nawyków.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var habit in userHabits)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 border-bottom" style="border-color: #e5e7eb !important;">
+                                    <div>
+                                        <span class="font-weight-bold text-dark d-block">@habit.Name</span>
+                                        <small class="text-muted">Cel: @habit.Target | @habit.Frequency</small>
+                                    </div>
+                                    <form asp-action="CompleteHabit" method="post" class="mb-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="habitId" value="@habit.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success font-weight-bold px-3" style="border-radius: 6px;">
+                                            ✓ Zrobione
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5 mb-4">
+            <div class="card border bg-white mb-4" style="border-radius: 8px; border-color: #e5e7eb !important;">
+                <div class="card-header bg-transparent border-bottom p-3" style="border-color: #e5e7eb !important;">
+                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 1.1rem;">📁 Kategorie</h5>
+                </div>
+                <div class="card-body p-3">
+                    @if (!categoriesStats.Any())
+                    {
+                        <p class="text-muted small text-center mb-0">Brak danych.</p>
+                    }
+                    else
+                    {
+                        @foreach (var stat in categoriesStats)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-2 small">
+                                <span class="text-secondary">@stat.CategoryName</span>
+                                <span class="badge badge-light border text-dark font-weight-bold px-2 py-1" style="border-radius: 4px;">@stat.Count</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="card border bg-white" style="border-radius: 8px; border-color: #e5e7eb !important;">
+                <div class="card-header bg-transparent border-bottom p-3" style="border-color: #e5e7eb !important;">
+                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 1.1rem;">⏳ Ostatnia aktywność</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (!recentActivities.Any())
+                    {
+                        <div class="p-4 text-center text-muted small">
+                            Brak zarejestrowanych aktywności.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var log in recentActivities)
+                            {
+                                <div class="list-group-item p-3 border-0 border-bottom" style="border-color: #e5e7eb !important; background: transparent;">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <span class="text-dark font-weight-bold small">🔹 @(log.Habit?.Name ?? "Nawyk")</span>
+                                        <span class="text-muted" style="font-size: 0.75rem;">@log.DateCompleted.ToString("dd.MM, HH:mm")</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

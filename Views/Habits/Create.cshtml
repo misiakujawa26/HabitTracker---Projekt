@@ -1,0 +1,71 @@
+﻿@model HabitTracker.Models.Habit
+
+@{
+    ViewData["Title"] = "Dodaj nawyk";
+}
+
+<div class="container mt-5" style="max-width: 600px;">
+    
+    <div class="card border bg-white shadow-sm" style="border-radius: 8px; border-color: #e5e7eb !important;">
+        <div class="card-header bg-transparent border-bottom p-4" style="border-color: #e5e7eb !important;">
+            <h4 class="mb-1 font-weight-bold text-dark"> Dodaj nowy nawyk</h4>
+            <p class="text-muted small mb-0">Uzupełnij poniższe pola, aby zacząć śledzić nową rutynę.</p>
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                <!-- Pole: Nazwa -->
+                <div class="form-group mb-4">
+                    <label asp-for="Name" class="font-weight-bold text-dark small mb-2">Nazwa nawyku</label>
+                    <input asp-for="Name" class="form-control" style="border-radius: 6px; border-color: #d1d5db;" placeholder="np. Bieganie, Czytanie książki" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <!-- Pole: Opis -->
+                <div class="form-group mb-4">
+                    <label asp-for="Description" class="font-weight-bold text-dark small mb-2">Opis</label>
+                    <input asp-for="Description" class="form-control" style="border-radius: 6px; border-color: #d1d5db;" placeholder="Krótki opis nawyku..." />
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <!-- Pole: Częstotliwość -->
+                <div class="form-group mb-4">
+                    <label asp-for="Frequency" class="font-weight-bold text-dark small mb-2">Częstotliwość</label>
+                    <input asp-for="Frequency" class="form-control" style="border-radius: 6px; border-color: #d1d5db;" placeholder="np. Codziennie, 3 razy w tygodniu" />
+                    <span asp-validation-for="Frequency" class="text-danger small"></span>
+                </div>
+
+                <!-- Pole: Cel ilościowy -->
+                <div class="form-group mb-4">
+                    <label asp-for="Target" class="font-weight-bold text-dark small mb-2">Cel</label>
+                    <input asp-for="Target" class="form-control" style="border-radius: 6px; border-color: #d1d5db;" placeholder="np. 5km, 20 stron, 15 minut" />
+                    <span asp-validation-for="Target" class="text-danger small"></span>
+                </div>
+
+                <!-- Pole: Kategoria -->
+                <div class="form-group mb-4">
+                    <label asp-for="CategoryId" class="font-weight-bold text-dark small mb-2">Kategoria</label>
+                    <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId" style="border-radius: 6px; border-color: #d1d5db; height: calc(1.5em + .75rem + 2px);"></select>
+                </div>
+
+                <!-- Dolne przyciski akcji -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top" style="border-color: #e5e7eb !important;">
+                    <a asp-action="Index" class="btn btn-link text-muted font-weight-bold text-decoration-none small p-0">
+                        Anuluj i wróć
+                    </a>
+                    <button type="submit" class="btn btn-primary font-weight-bold px-4" style="border-radius: 6px; background-color: #007bff; border-color: #007bff;">
+                        Stwórz nawyk
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
