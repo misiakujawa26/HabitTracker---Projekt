@@ -1,0 +1,190 @@
+﻿@using HabitTracker.Models
+@model CalendarViewModel
+
+@{
+    ViewData["Title"] = "Kalendarz Nawyków";
+    var prevMonth = Model.CurrentMonth.AddMonths(-1);
+    var nextMonth = Model.CurrentMonth.AddMonths(1);
+    var activeHabits = ViewBag.ActiveHabits as List<HabitTracker.Models.Habit> ?? new List<HabitTracker.Models.Habit>();
+}
+
+<style>
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+    }
+
+    .calendar-day-header {
+        text-align: center;
+        font-weight: bold;
+        padding: 5px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .calendar-day {
+        min-height: 110px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 6px;
+        background-color: #ffffff;
+        cursor: pointer;
+        transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+        .calendar-day:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .calendar-day.not-current-month {
+            background-color: #f1f3f5;
+            color: #adb5bd;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #0d6efd;
+            background-color: #f0f7ff;
+        }
+
+    .habit-badge {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        margin-bottom: 2px;
+        display: block;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        border-radius: 4px;
+        color: #fff;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a asp-action="Index" asp-route-year="@prevMonth.Year" asp-route-month="@prevMonth.Month" class="btn btn-outline-secondary">&laquo; @prevMonth.ToString("MMMM")</a>
+        <h2 class="mb-0 text-capitalize font-weight-bold"><i class="bi bi-calendar3"></i> @Model.CurrentMonth.ToString("MMMM yyyy")</h2>
+        <a asp-action="Index" asp-route-year="@nextMonth.Year" asp-route-month="@nextMonth.Month" class="btn btn-outline-secondary">@nextMonth.ToString("MMMM") &raquo;</a>
+    </div>
+
+    <div class="calendar-grid mb-2">
+        <div class="calendar-day-header">Pon</div><div class="calendar-day-header">Wt</div><div class="calendar-day-header">Śr</div>
+        <div class="calendar-day-header">Czw</div><div class="calendar-day-header">Pt</div><div class="calendar-day-header">Sob</div><div class="calendar-day-header">Ndz</div>
+    </div>
+
+    <div class="calendar-grid">
+        @foreach (var day in Model.Days)
+        {
+            var isToday = day.Date == DateTime.Today;
+            var dayClasses = "calendar-day";
+            if (!day.IsCurrentMonth) dayClasses += " not-current-month";
+            if (isToday) dayClasses += " today";
+
+            <div class="@dayClasses" data-date="@day.Date.ToString("yyyy-MM-dd")" data-display-date="@day.Date.ToString("dd MMMM yyyy")">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold @(isToday ? "text-primary" : "")">@day.Date.Day</span>
+                </div>
+
+                <div class="habit-container" id="habits-@day.Date.ToString("yyyy-MM-dd")">
+                    @foreach (var habit in day.CompletedHabits)
+                    {
+                        <span class="habit-badge" style="background-color: @habit.ColorHex;" data-habit-id="@habit.HabitId" title="@habit.HabitName">
+                            @habit.HabitName
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="habitModal" tabindex="-1" aria-labelledby="habitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 8px;">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold" id="modalTargetDate">Zarządzaj nawykami</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Zaznacz nawyki zrealizowane w tym dniu:</p>
+                <input type="hidden" id="selectedDateRaw" />
+
+                <div class="list-group list-group-flush">
+                    @foreach (var h in activeHabits)
+                    {
+                        <label class="list-group-item d-flex align-items-center p-3 style="cursor:pointer;">
+                            <input class="form-check-input me-3 habit-checkbox" type="checkbox" value="@h.Id" data-name="@h.Name" style="width:20px; height:20px;">
+                            <span class="font-weight-bold text-dark">@h.Name</span>
+                        </label>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var modal = new bootstrap.Modal(document.getElementById('habitModal'));
+
+            // Kliknięcie w kafel dnia w kalendarzu
+            $('.calendar-grid').on('click', '.calendar-day', function () {
+                var dateRaw = $(this).data('date');
+                var dateDisplay = $(this).data('display-date');
+
+                $('#selectedDateRaw').val(dateRaw);
+                $('#modalTargetDate').text("Dzień: " + dateDisplay);
+
+                // Odznacz wszystkie checkboxy na start
+                $('.habit-checkbox').prop('checked', false);
+
+                // Sprawdź, które nawyki są już wyświetlone w tym kafelku i zaznacz odpowiednie checkboxy
+                $('#habits-' + dateRaw + ' .habit-badge').each(function () {
+                    var completedHabitId = $(this).data('habit-id');
+                    $('.habit-checkbox[value="' + completedHabitId + '"]').prop('checked', true);
+                });
+
+                modal.show();
+            });
+
+            //  Kliknięcie w checkbox wewnątrz Modala
+            $('.habit-checkbox').on('change', function () {
+                var checkbox = $(this);
+                var habitId = checkbox.val();
+                var dateStr = $('#selectedDateRaw').val();
+
+                // Wyślij żądanie AJAX POST do serwera
+                $.ajax({
+                    url: '@Url.Action("ToggleHabit", "Calendar")',
+                    type: 'POST',
+                    data: {
+                        habitId: habitId,
+                        dateStr: dateStr
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            var container = $('#habits-' + dateStr);
+
+                            if (response.action === "added") {
+                                // Jeśli dodano na serwerze -> dodaj dynamicznie kod HTML paska nawyku do kalendarza
+                                var newBadge = `<span class="habit-badge" style="background-color: ${response.color};" data-habit-id="${response.habitId}" title="${response.habitName}">${response.habitName}</span>`;
+                                container.append(newBadge);
+                            }
+                            else if (response.action === "removed") {
+                                // Jeśli usunięto na serwerze -> znajdź i usuń pasek z kalendarza
+                                container.find(`[data-habit-id="${response.habitId}"]`).remove();
+                            }
+                        }
+                    },
+                    error: function () {
+                        alert("Wystąpił błąd podczas zapisywania zmian.");
+                        // W razie błędu przywróć poprzedni stan checkboxa
+                        checkbox.prop('checked', !checkbox.prop('checked'));
+                    }
+                });
+            });
+        });
+    </script>
+}
