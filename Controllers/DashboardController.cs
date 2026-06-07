@@ -29,6 +29,17 @@ namespace HabitTracker.Controllers
     {
       // Pobranie  Id aktualnie zalogowanego użytkownika
       var userId = _userManager.GetUserId(User);
+      var today = DateTime.Today; // Data na dzisiaj
+    
+      //id nawyków ukonczonych dzisiaj
+      var completedHabitIds = await _context.HabitLogs
+        .Where(l => l.DateCompleted.Date == today && l.Habit!.UserId == userId)
+        .Select(l => l.HabitId)
+        .ToListAsync();
+     //przekazanie do widoku
+     ViewBag.CompletedHabitIds = completedHabitIds;
+
+
       //Licznik aktywnych nawyków
       var activeHabitsCount = await _context.Habits
                 .Where(h => h.UserId == userId && h.IsActive)
@@ -73,10 +84,10 @@ namespace HabitTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CompleteHabit(int habitId)
         {
-             var userId = _userManager.GetUserId(User);
+            var userId = _userManager.GetUserId(User);
             // Bezpieczne pobranie nawyku
             var habit = await _context.Habits.FirstOrDefaultAsync(h => h.Id == habitId && h.UserId == userId);
-             if (habit == null)
+            if (habit == null)
             {
                 return NotFound();
             }
@@ -84,13 +95,13 @@ namespace HabitTracker.Controllers
             var today = DateTime.Today;
             var alreadyCompletedToday = await _context.HabitLogs
                 .AnyAsync(l => l.HabitId == habitId && l.DateCompleted.Date == today);
-             if (!alreadyCompletedToday)
+            if (!alreadyCompletedToday)
             {
                 var log = new HabitLog
                 {
                     HabitId = habitId,
                     DateCompleted = DateTime.Now
-                   
+
                 };
 
                 _context.HabitLogs.Add(log);
@@ -98,6 +109,34 @@ namespace HabitTracker.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        //wyciąganie danych z bazy, grupowanie ich i liczenie
+        [HttpGet]
+        public async Task<IActionResult> GetActivityData()
+        {
+            var userId = _userManager.GetUserId(User);
+            var sevenDaysAgo = DateTime.Today.AddDays(-6);
+
+            // pobranie logow z ostatnich 7 dni dla zalog usera
+            var logs = await _context.HabitLogs
+                .Where(l => l.Habit!.UserId == userId && l.DateCompleted >= sevenDaysAgo)
+                .GroupBy(l => l.DateCompleted.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            // lista z 7 dni (etykiety, wartości)
+            var labels = new List<string>();
+            var data = new List<int>();
+
+            for (int i = 6; i >= 0; i--)
+            {
+                var date = DateTime.Today.AddDays(-i);
+                labels.Add(date.ToString("dd.MM")); // np. "06.09"
+                data.Add(logs.FirstOrDefault(l => l.Date == date)?.Count ?? 0);
+            }
+
+            return Json(new { labels, data });
         }
     }
 
